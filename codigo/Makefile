@@ -27,9 +27,9 @@ tar:
 	done
 
 	# (se houverem .h)
-	for a in *.h; do \
-		cp $$a ../$(DIRNAME)/$$a; \
-	done
+	# for a in *.h; do \
+	#	cp $$a ../$(DIRNAME)/$$a; \
+	# done
 
 	# gera ../$(DIRNAME).tar.gz
 	tar -czvf ../$(DIRNAME).tar.gz ../$(DIRNAME)
