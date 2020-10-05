@@ -1,0 +1,15 @@
+Esse é o projeto para o Exercício-Projeto 2 de MAC0422 - Sistemas Operacionais do IME-USP,
+ministrada pelo Prof. Dr. Daniel Macêdo Batista. Ele foi realizado em dupla pelos alunos
+Lucas Paiolla Forastiere (NUSP: 11221911) e Marcos Siolin Martins (NUSP: 11221709).
+
+Para compilar os binários basta rodar:
+    make
+
+Como a primeira regra de compilação é default, rodar make é o mesmo que rodar make default, que
+rodará as regras de compilação ______ e _______.
+
+Para compilar especificamente ______:
+    make _____
+
+Para executar ________:
+    ./_________
