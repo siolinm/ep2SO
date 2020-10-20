@@ -1,5 +1,5 @@
 DIRNAME    = ep2-lucas-marcos
-EPOBJS     = ep2.o
+EPOBJS     = ep2.o util.o
 CFLAGS     = -Wall -g -pedantic -Wno-unused-result
 LIBS_EP2   = -lpthread
 
