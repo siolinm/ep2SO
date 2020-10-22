@@ -5,9 +5,12 @@
 
 typedef enum { False, True } Bool;
 
-#define MAX_CICLISTAS 500
-#define D_MAX 10000
+#define D_MAX 2000
+#define MAX_CICLISTAS 5 * D_MAX
 #define FAIXAS 10
+
+// True se queremos estamos no modo debug
+#define debugOn True
 
 typedef struct {
 	int velocidade;     // velocidade atual
@@ -17,16 +20,19 @@ typedef struct {
 	int chegou;         // -1 caso não chegou ou t caso chegou no instante t
 } competidor;
 
-competidor ciclistas[MAX_CICLISTAS];        // Array com todos os ciclistas
-pthread_t threads[MAX_CICLISTAS];           // A thread de cada ciclista
-int pista[D_MAX][FAIXAS];                   // Uma matriz de referência
-pthread_mutex_t mutex_pista[D_MAX][FAIXAS]; // Um mutex para cada posição da matriz
+competidor ciclistas[MAX_CICLISTAS]; // Array com todos os ciclistas
+pthread_t threads[MAX_CICLISTAS];    // A thread de cada ciclista
+int pista[D_MAX][FAIXAS];            // Uma matriz de referência
+pthread_mutex_t mutex_pista[D_MAX]
+                           [FAIXAS]; // Um mutex para cada posição da matriz
 
 pthread_barrier_t barreira;     // A barreira do pthread
 pthread_mutex_t mutex_barreira; // Mutex de acesso à barreira
 
 Bool ciclistaEliminado;          // Marca que algum ciclista foi elimitado
 pthread_mutex_t mutex_eliminado; // Mutex de proteção
+
+Bool primeiro_a_chegar; // Se False, alguém já passou pela região de sincronia
 
 #define velocidade(i) ciclistas[i].velocidade
 #define quando_quebrou(i) ciclistas[i].quando_quebrou
@@ -38,10 +44,14 @@ pthread_mutex_t mutex_eliminado; // Mutex de proteção
 #define pista(i, j) pista[i][j]
 #define vpista(f) pista[f[0]][f[1]]
 
-int d, n; // Valores d e n do enunciado
-int n_cur;
+#define TRECHO 20
+
+int d, n;  // Valores d e n do enunciado
+int n_cur; // Quantos ciclistas ainda estão correndo
+int t_cur; // O tempo atual
 
 void setPosicao(int PID, int i, int j);
 void setvPosicao(int PID, int pos[2]);
+void debugar();
 
 #endif /* ifndef _UTIL_H */
