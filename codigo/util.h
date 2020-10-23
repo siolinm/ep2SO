@@ -13,11 +13,11 @@ typedef enum { False, True } Bool;
 #define debugOn True
 
 typedef struct {
-	int velocidade;     // velocidade atual
-	int pos[2];         // posição na pista
-	int quando_quebrou; // -1 caso não quebrou, t caso chegou no instante t
-	int volta_atual;    // o número da volta atual
-	int chegou;         // -1 caso não chegou ou t caso chegou no instante t
+    int velocidade;     // velocidade atual
+    int pos[2];         // posição na pista
+    int quando_quebrou; // -1 caso não quebrou, t caso chegou no instante t
+    int volta_atual;    // o número da volta atual
+    int chegou;         // -1 caso não chegou ou t caso chegou no instante t
 } competidor;
 
 competidor ciclistas[MAX_CICLISTAS]; // Array com todos os ciclistas
