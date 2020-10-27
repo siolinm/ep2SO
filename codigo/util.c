@@ -19,7 +19,9 @@ void setvPosicao(int PID, int pos[2]) {
 void debugar() {
     char c;
     int soma = 0;
-    fprintf(stderr, "tempo: %d ms\n", t_cur);
+    t_sec_cur += t_cur/1000;
+    t_cur %= 1000;
+    fprintf(stderr, "tempo: %d s %d ms\n", t_sec_cur, t_cur);
     for (int k = 0; k < d; k += TRECHO) {
         fprintf(stderr, "    ");
 

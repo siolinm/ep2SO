@@ -54,7 +54,8 @@ Bool primeiro_a_chegar; // Se False, alguém já passou pela região de sincroni
 
 int d, n;  // Valores d e n do enunciado
 int n_cur; // Quantos ciclistas ainda estão correndo
-int t_cur; // O tempo atual
+int t_cur; // milissegundos do tempo atual
+int t_sec_cur; // O tempo atual em segundos
 
 void setPosicao(int PID, int i, int j);
 void setvPosicao(int PID, int pos[2]);

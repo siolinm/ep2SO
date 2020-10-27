@@ -140,8 +140,8 @@ void *ciclista(void *argv) {
         pthread_mutex_lock(&mutex_eliminado);
         n_cur--;
         ciclistaEliminado = True;
-        pista(i, j) = 0;
-        fprintf(stderr, "%d foi eliminado.\n", PID);
+        pista(metro(PID), faixa(PID)) = 0;
+        // fprintf(stderr, "%d foi eliminado.\n", PID);
         /* getchar(); */
         pthread_mutex_unlock(&mutex_eliminado);
       }
@@ -152,7 +152,7 @@ void *ciclista(void *argv) {
 
     round(PID) = (round(PID) + 1) % max_round(PID);
 
-    if (debugOn) fprintf(stderr, "Eu %d terminei meu trabalho\n", PID);
+    // if (debugOn) fprintf(stderr, "Eu %d terminei meu trabalho\n", PID);
     terminou_acao(PID) = True;
 
     pthread_barrier_wait(&barreira);
@@ -174,15 +174,17 @@ void *ciclista(void *argv) {
         pthread_barrier_destroy(&barreira);
         pthread_barrier_init(&barreira, NULL, n_cur);
         ciclistaEliminado = False;
-      }
+      }      
+
 
       if (debugOn && ((t_cur % 60 == 0) || (n_cur <= 2 && t_cur % 20 == 0))) {
         debugar();
+        getchar();
         /* usleep(2000); */
       }
 
-      fprintf(stderr, "\n\n\n\n");
-      fprintf(stderr, "n_cur = %d\n", n_cur);
+      // fprintf(stderr, "\n\n\n\n");
+      // fprintf(stderr, "n_cur = %d\n", n_cur);
 
       t_cur += 20;
       /* usleep(20 * 1000); */
@@ -214,6 +216,7 @@ int main(int argc, char *argv[]) {
 
   n_cur = n;
   t_cur = 0;
+  t_sec_cur = 0;
   pthread_barrier_init(&barreira, NULL, n_cur);
 
   pthread_mutex_init(&mutex_barreira, NULL);
