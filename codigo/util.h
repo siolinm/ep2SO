@@ -18,6 +18,9 @@ typedef struct {
     int quando_quebrou; // -1 caso não quebrou, t caso chegou no instante t
     int volta_atual;    // o número da volta atual
     int chegou;         // -1 caso não chegou ou t caso chegou no instante t
+    int round;          // round atual
+    int max_round;      // round máximo
+    Bool terminou_acao; // se está na barreira de sincronização
 } competidor;
 
 competidor ciclistas[MAX_CICLISTAS]; // Array com todos os ciclistas
@@ -40,6 +43,9 @@ Bool primeiro_a_chegar; // Se False, alguém já passou pela região de sincroni
 #define metro(i) ciclistas[i].pos[0]
 #define faixa(i) ciclistas[i].pos[1]
 #define chegou(i) ciclistas[i].chegou
+#define round(i) ciclistas[i].round
+#define max_round(i) ciclistas[i].max_round
+#define terminou_acao(i) ciclistas[i].terminou_acao
 
 #define pista(i, j) pista[i][j]
 #define vpista(f) pista[f[0]][f[1]]

@@ -4,6 +4,8 @@
 
 #define min(a, b) (a < b ? a : b)
 
+#define COM_COR 1
+
 void setPosicao(int PID, int i, int j) {
     metro(PID) = i;
     faixa(PID) = j;
@@ -16,26 +18,36 @@ void setvPosicao(int PID, int pos[2]) {
 
 void debugar() {
     char c;
-    printf("tempo: %d ms\n", t_cur);
+    int soma = 0;
+    fprintf(stderr, "tempo: %d ms\n", t_cur);
     for (int k = 0; k < d; k += TRECHO) {
-        printf("    ");
+        fprintf(stderr, "    ");
 
-        for (int i = k; i < min(k + TRECHO, d); i++) printf(" %5d", i + 1);
-        printf("\n    ");
+        for (int i = k; i < min(k + TRECHO, d); i++) fprintf(stderr, " %5d", i + 1);
+        fprintf(stderr, "\n    ");
 
-        for (int i = k; i < min(k + TRECHO, d); i++) printf("------");
-        printf("\n");
+        for (int i = k; i < min(k + TRECHO, d); i++) fprintf(stderr, "------");
+        fprintf(stderr, "\n");
 
+        soma = 0;
         for (int j = 0; j < FAIXAS; j++) {
-            printf("%2d |", j + 1);
-            for (int i = k; i < min(k + TRECHO, d); i++)
+            fprintf(stderr, "%2d |", j + 1);
+            for (int i = k; i < min(k + TRECHO, d); i++) {
                 if (pista(i, j) == 0)
-                    printf(" %5d", pista(i, j));
+                    fprintf(stderr, " %5d", pista(i, j));
+                else if (COM_COR) // 32 -> verde
+                    fprintf(stderr, " \033[1;%dm%2d:%2d\033[0m", 32, pista(i, j) - 1,
+                           velocidade(pista(i, j) - 1));
                 else
-                    printf(" \033[1;%dm%5d\033[0m", 32, pista(i, j));
-
-            printf("\n");
+                    fprintf(stderr, " %5d", pista(i, j));
+                soma += pista(i, j);
+            }
+            fprintf(stderr, "\n");
+        }
+        if (n == n_cur && soma != (n + 1) * n / 2) {
+            fprintf(stderr, "ERRO\n");
+            scanf(" %c", &c);
         }
     }
-    scanf(" %c", &c);
+    /* scanf(" %c", &c); */
 }
