@@ -3,36 +3,42 @@
 
 #include <pthread.h>
 
+#include "linkedList.h"
+
 typedef enum { False, True } Bool;
 
 #define D_MAX 2000
 #define MAX_CICLISTAS 5 * D_MAX
 #define FAIXAS 10
+#define TRECHO 20
 
 // True se queremos estamos no modo debug
 #define debugOn True
 
 typedef struct {
-    int velocidade;     // velocidade atual
-    int pos[2];         // posição na pista
-    int quando_quebrou; // -1 caso não quebrou, t caso chegou no instante t
-    int volta_atual;    // o número da volta atual
-    int chegou;         // -1 caso não chegou ou t caso chegou no instante t
-    int round;          // round atual
-    int max_round;      // round máximo
-    Bool terminou_acao; // se está na barreira de sincronização
+  int velocidade;     // velocidade atual
+  int pos[2];         // posição na pista
+  int quando_quebrou; // -1 caso não quebrou, t caso chegou no instante t
+  int volta_atual;    // o número da volta atual
+  int chegou;         // -1 caso não chegou ou t caso chegou no instante t
+  int round;          // round atual
+  int max_round;      // round máximo
+  Bool terminou_acao; // se está na barreira de sincronização
+  Bool eliminado;     // se precisa ser eliminado na linha de chegada
 } competidor;
 
-competidor ciclistas[MAX_CICLISTAS]; // Array com todos os ciclistas
-pthread_t threads[MAX_CICLISTAS];    // A thread de cada ciclista
-int pista[D_MAX][FAIXAS];            // Uma matriz de referência
-pthread_mutex_t mutex_pista[D_MAX]
-                           [FAIXAS]; // Um mutex para cada posição da matriz
+competidor ciclistas[MAX_CICLISTAS];        // Array com todos os ciclistas
+pthread_t threads[MAX_CICLISTAS];           // A thread de cada ciclista
+int pista[D_MAX][FAIXAS];                   // Uma matriz de referência
+pthread_mutex_t mutex_pista[D_MAX][FAIXAS]; // Um mutex para cada posição
 
 pthread_barrier_t barreira;     // A barreira do pthread
 pthread_mutex_t mutex_barreira; // Mutex de acesso à barreira
 
-Bool ciclistaEliminado;          // Marca que algum ciclista foi elimitado
+Bool ciclistaEliminado;          // Marca que algum ciclista foi eliminado
+llist *ranking[MAX_CICLISTAS];   // Vetor com as classificações por volta
+int quebraram[MAX_CICLISTAS];    // Vetor de ciclistas quebrados
+int ult;                         // A última volta em que alguém foi eliminado
 pthread_mutex_t mutex_eliminado; // Mutex de proteção
 
 Bool primeiro_a_chegar; // Se False, alguém já passou pela região de sincronia
@@ -46,15 +52,14 @@ Bool primeiro_a_chegar; // Se False, alguém já passou pela região de sincroni
 #define round(i) ciclistas[i].round
 #define max_round(i) ciclistas[i].max_round
 #define terminou_acao(i) ciclistas[i].terminou_acao
+#define eliminado(i) ciclistas[i].eliminado
 
 #define pista(i, j) pista[i][j]
 #define vpista(f) pista[f[0]][f[1]]
 
-#define TRECHO 20
-
-int d, n;  // Valores d e n do enunciado
-int n_cur; // Quantos ciclistas ainda estão correndo
-int t_cur; // milissegundos do tempo atual
+int d, n;      // Valores d e n do enunciado
+int n_cur;     // Quantos ciclistas ainda estão correndo
+int t_cur;     // milissegundos do tempo atual
 int t_sec_cur; // O tempo atual em segundos
 
 void setPosicao(int PID, int i, int j);

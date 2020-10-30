@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "linkedList.h"
 #include "util.h"
 
 Bool chegouChegada(int PID) {
@@ -15,34 +16,71 @@ Bool chegouChegada(int PID) {
 
   if (volta_atual(PID) == 0) return False;
 
-  /* ver se quebrou? */
-  if (volta_atual(PID) != 0 && n_cur > 5 && volta_atual(PID) % 3 == 0) {
-    randValue = (((double) rand()) / RAND_MAX);
-    if (randValue < 0.05) { /* quebrou */
-      /* printo na tela */
-      quebrouOuEliminado = True;
-    }
+  pthread_mutex_lock(&mutex_eliminado);
+  if (eliminado(PID)) {
+    pthread_mutex_unlock(&mutex_eliminado);
+    return True;
   }
 
   /* ver se foi eliminado? */
-  /* pessoasNaVolta[volta_atual(PID)]++; */
-  /* if (pessoasNaVolta[volta_atual(PID)+1] == n_cur -1) */
-  /* quebrouOuEliminado = True; */
+  if (volta_atual(PID) - 1 == ult && ranking[ult]) {
+    if (ranking[ult]->size + quebraram[ult] == ranking[ult - 1]->size - 1) {
+      eliminado(PID) = True;
+      fprintf(stderr, "PID %d eliminado.\n", PID);
+      quebrouOuEliminado = True;
+      ult += 2;
+    }
 
-  /* mudar a minha velocidade */
-  randValue = (((double) rand()) / RAND_MAX);
-  if (velocidade(PID) == 30 && randValue < 0.8) {
-    /* fprintf("%d mudou de velocidade: 30 -> 60\n", PID); */
-    velocidade(PID) = 60;
-  } else if (velocidade(PID) == 60 && randValue < 0.4) {
-    /* fprintf(stderr, "%d mudou de velocidade: 60 -> 30\n", PID); */
-    velocidade(PID) = 30;
+    while (ranking[ult] &&
+           ranking[ult]->size + quebraram[ult] == ranking[ult - 1]->size) {
+      int i = ranking[ult]->tail->value;
+      eliminado(i) = True; // aviso para quando ele passar pela chegada
+      ult += 2;
+    }
   }
 
-  // perguntar no forum se é isso ou se é 10% de ter um a 90
-  if (n_cur <= 2 && randValue < 0.1) {
-    /* fprintf(stderr, "%d mudou de velocidade para 90\n", PID); */
-    velocidade(PID) = 90;
+  /* ver se quebrou? */
+  if (!quebrouOuEliminado && n_cur > 5 && volta_atual(PID) % 6 == 0) {
+    randValue = (((double) rand()) / RAND_MAX);
+    if (randValue < 0.05) { /* quebrou */
+      /* printo na tela */
+      fprintf(stderr, "PID %d quebrou.\n", PID);
+      quebrouOuEliminado = True;
+      quebraram[volta_atual(PID) - 1]++;
+    }
+  }
+  pthread_mutex_unlock(&mutex_eliminado);
+
+  /* mudar a minha velocidade */
+  if (!quebrouOuEliminado) {
+    randValue = (((double) rand()) / RAND_MAX);
+    if (velocidade(PID) == 30 && randValue < 0.8) {
+      /* fprintf("%d mudou de velocidade: 30 -> 60\n", PID); */
+      velocidade(PID) = 60;
+    } else if (velocidade(PID) == 60 && randValue < 0.4) {
+      /* fprintf(stderr, "%d mudou de velocidade: 60 -> 30\n", PID); */
+      velocidade(PID) = 30;
+    }
+
+    pthread_mutex_lock(&mutex_eliminado);
+    // perguntar no forum se é isso ou se é 10% de ter um a 90
+    if (n_cur <= 2 && randValue < 0.1) {
+      /* fprintf(stderr, "%d mudou de velocidade para 90\n", PID); */
+      velocidade(PID) = 90;
+    }
+    pthread_mutex_unlock(&mutex_eliminado);
+  }
+
+  if (!quebrouOuEliminado) {
+    pthread_mutex_lock(&mutex_eliminado);
+    if (ranking[volta_atual(PID) - 1] == NULL) // primeiro a chegar
+      ranking[volta_atual(PID) - 1] = initList();
+
+    push(ranking[volta_atual(PID) - 1], PID);
+    fprintf(stderr, "volta %d : ", volta_atual(PID) - 1);
+    print(ranking[volta_atual(PID) - 1]);
+    /* getchar(); */
+    pthread_mutex_unlock(&mutex_eliminado);
   }
 
   return quebrouOuEliminado;
@@ -162,6 +200,7 @@ void *ciclista(void *argv) {
     /* usleep(2000); */
 
     terminou_acao(PID) = False;
+    if (n_cur == 1) fuiEliminado = True;
 
     if (primeiro_a_chegar) {
       /* if (debugOn) fprintf(stderr, "Primeiro dentro da barreira = %d\n",
@@ -174,12 +213,12 @@ void *ciclista(void *argv) {
         pthread_barrier_destroy(&barreira);
         pthread_barrier_init(&barreira, NULL, n_cur);
         ciclistaEliminado = False;
-      }      
-
+        /* getchar(); */
+      }
 
       if (debugOn && ((t_cur % 60 == 0) || (n_cur <= 2 && t_cur % 20 == 0))) {
         debugar();
-        getchar();
+        /* getchar(); */
         /* usleep(2000); */
       }
 
@@ -217,6 +256,13 @@ int main(int argc, char *argv[]) {
   n_cur = n;
   t_cur = 0;
   t_sec_cur = 0;
+  ult = 1;
+
+  for (int i = 0; i < 2 * n; i++) {
+    ranking[i] = NULL;
+    quebraram[i] = 0;
+  }
+
   pthread_barrier_init(&barreira, NULL, n_cur);
 
   pthread_mutex_init(&mutex_barreira, NULL);
@@ -262,6 +308,9 @@ int main(int argc, char *argv[]) {
     }
 
   pthread_barrier_destroy(&barreira);
+
+  for (int i = 0; i < 2 * n; i++)
+    if (ranking[i]) freeList(ranking[i]);
 
   return 0;
 }

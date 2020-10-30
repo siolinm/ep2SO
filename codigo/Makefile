@@ -1,5 +1,5 @@
 DIRNAME    = ep2-lucas-marcos
-EPOBJS     = ep2.o util.o
+EPOBJS     = ep2.o util.o linkedList.o
 CFLAGS     = -Wall -g -pedantic -Wno-unused-result
 LIBS_EP2   = -lpthread
 
@@ -8,7 +8,7 @@ default: ep2
 ep2: $(EPOBJS)
 	gcc $(CFLAGS) $(EPOBJS) -o ep2 $(LIBS_EP2)
 
-%.o: %.c # %.h
+%.o: %.c %.h
 	gcc $(CFLAGS) -c $<
 
 tar:
