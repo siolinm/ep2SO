@@ -12,9 +12,6 @@ typedef enum { False, True } Bool;
 #define FAIXAS 10
 #define TRECHO 20
 
-// True se queremos estamos no modo debug
-#define debugOn True
-
 typedef struct {
   int velocidade;     // velocidade atual
   int pos[2];         // posição na pista
@@ -61,9 +58,8 @@ int d, n;      // Valores d e n do enunciado
 int n_cur;     // Quantos ciclistas ainda estão correndo
 int t_cur;     // milissegundos do tempo atual
 int t_sec_cur; // O tempo atual em segundos
+Bool debugOn;  // True se queremos estamos no modo debug
 
-void setPosicao(int PID, int i, int j);
-void setvPosicao(int PID, int pos[2]);
 void debugar();
 
 #endif /* ifndef _UTIL_H */

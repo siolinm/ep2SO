@@ -10,8 +10,6 @@ Bool chegouChegada(int PID) {
   double randValue;
   Bool quebrouOuEliminado = False;
 
-  fprintf(stderr, "PID %d passou na chegada\n", PID);
-
   volta_atual(PID) += 1;
 
   if (volta_atual(PID) == 0) return False;
@@ -26,9 +24,10 @@ Bool chegouChegada(int PID) {
   if (volta_atual(PID) - 1 == ult && ranking[ult]) {
     if (ranking[ult]->size + quebraram[ult] == ranking[ult - 1]->size - 1) {
       eliminado(PID) = True;
-      fprintf(stderr, "PID %d eliminado.\n", PID);
       quebrouOuEliminado = True;
       ult += 2;
+
+      if (debugOn) fprintf(stderr, "PID %d eliminado em t = %d.\n", PID, t_cur);
     }
 
     while (ranking[ult] &&
@@ -43,10 +42,10 @@ Bool chegouChegada(int PID) {
   if (!quebrouOuEliminado && n_cur > 5 && volta_atual(PID) % 6 == 0) {
     randValue = (((double) rand()) / RAND_MAX);
     if (randValue < 0.05) { /* quebrou */
-      /* printo na tela */
-      fprintf(stderr, "PID %d quebrou.\n", PID);
       quebrouOuEliminado = True;
       quebraram[volta_atual(PID) - 1]++;
+
+      if (debugOn) fprintf(stderr, "PID %d quebrou em t = %d.\n", PID, t_cur);
     }
   }
   pthread_mutex_unlock(&mutex_eliminado);
@@ -54,20 +53,15 @@ Bool chegouChegada(int PID) {
   /* mudar a minha velocidade */
   if (!quebrouOuEliminado) {
     randValue = (((double) rand()) / RAND_MAX);
-    if (velocidade(PID) == 30 && randValue < 0.8) {
-      /* fprintf("%d mudou de velocidade: 30 -> 60\n", PID); */
+    if (velocidade(PID) == 30 && randValue < 0.8)
       velocidade(PID) = 60;
-    } else if (velocidade(PID) == 60 && randValue < 0.4) {
-      /* fprintf(stderr, "%d mudou de velocidade: 60 -> 30\n", PID); */
+    else if (velocidade(PID) == 60 && randValue < 0.4)
       velocidade(PID) = 30;
-    }
 
     pthread_mutex_lock(&mutex_eliminado);
-    // perguntar no forum se é isso ou se é 10% de ter um a 90
-    if (n_cur <= 2 && randValue < 0.1) {
-      /* fprintf(stderr, "%d mudou de velocidade para 90\n", PID); */
-      velocidade(PID) = 90;
-    }
+    /* TODO: Perguntar no fórum se é isso ou se é 10% de ter um a 90 <30-10-20,
+     * Lucas> */
+    if (n_cur <= 2 && randValue < 0.1) velocidade(PID) = 90;
     pthread_mutex_unlock(&mutex_eliminado);
   }
 
@@ -77,9 +71,12 @@ Bool chegouChegada(int PID) {
       ranking[volta_atual(PID) - 1] = initList();
 
     push(ranking[volta_atual(PID) - 1], PID);
-    fprintf(stderr, "volta %d : ", volta_atual(PID) - 1);
-    print(ranking[volta_atual(PID) - 1]);
-    /* getchar(); */
+
+    if (debugOn) {
+      fprintf(stderr, "Volta %d : ", volta_atual(PID) - 1);
+      print(ranking[volta_atual(PID) - 1]);
+    }
+
     pthread_mutex_unlock(&mutex_eliminado);
   }
 
@@ -104,7 +101,7 @@ void andarPara(int PID, int i, int j, Bool *andei, Bool *fuiEliminado) {
   if (metro(PID) == 0) *fuiEliminado = chegouChegada(PID);
 }
 
-/** Função que executada por cada thread */
+/* Função que executada por cada thread */
 void *ciclista(void *argv) {
   int PID = *((int *) argv);
   free(argv);
@@ -126,10 +123,7 @@ void *ciclista(void *argv) {
   primeiro_a_chegar = True;
 
   /* Esperando pela largada */
-  /* sleep(rand() % 10); */
-  /* fprintf(stderr, "PID = %d pronto\n", PID); */
   pthread_barrier_wait(&barreira);
-  /* fprintf(stderr, "Corrida começada!\n"); */
 
   while (!fuiEliminado) {
     if (round(PID) == 0) {
@@ -138,18 +132,13 @@ void *ciclista(void *argv) {
       andei = False;
 
       pthread_mutex_lock(&mutex_pista[i][j]);
-      /* fprintf(stderr, "%d: Passei pela primeira\n", PID); */
       f[0] = (i + 1) % d;
       f[1] = j;
       pthread_mutex_lock(&mutex_pista[f[0]][f[1]]);
-      /* fprintf(stderr, "%d: Passei pela segunda\n", PID); */
 
       while (vpista(f) != 0 && !terminou_acao(vpista(f) - 1)) {
-        /* fprintf(stderr, "sou %d e estou esperando\n", PID); */
         pthread_mutex_unlock(&mutex_pista[f[0]][f[1]]);
-        usleep(20000);
-        /* fprintf(stderr, "Sou %d\n", PID); */
-        /* getchar(); */
+        usleep(200000);
         pthread_mutex_lock(&mutex_pista[f[0]][f[1]]);
       }
 
@@ -180,7 +169,6 @@ void *ciclista(void *argv) {
         ciclistaEliminado = True;
         pista(metro(PID), faixa(PID)) = 0;
         // fprintf(stderr, "%d foi eliminado.\n", PID);
-        /* getchar(); */
         pthread_mutex_unlock(&mutex_eliminado);
       }
 
@@ -190,49 +178,34 @@ void *ciclista(void *argv) {
 
     round(PID) = (round(PID) + 1) % max_round(PID);
 
-    // if (debugOn) fprintf(stderr, "Eu %d terminei meu trabalho\n", PID);
     terminou_acao(PID) = True;
 
     pthread_barrier_wait(&barreira);
     if (fuiEliminado) break;
     pthread_mutex_lock(&mutex_barreira);
 
-    /* usleep(2000); */
-
     terminou_acao(PID) = False;
     if (n_cur == 1) fuiEliminado = True;
 
     if (primeiro_a_chegar) {
-      /* if (debugOn) fprintf(stderr, "Primeiro dentro da barreira = %d\n",
-       * PID);
-       */
-
       primeiro_a_chegar = False;
 
       if (ciclistaEliminado) {
         pthread_barrier_destroy(&barreira);
         pthread_barrier_init(&barreira, NULL, n_cur);
         ciclistaEliminado = False;
-        /* getchar(); */
       }
 
       if (debugOn && ((t_cur % 60 == 0) || (n_cur <= 2 && t_cur % 20 == 0))) {
         debugar();
-        /* getchar(); */
-        /* usleep(2000); */
       }
 
-      // fprintf(stderr, "\n\n\n\n");
-      // fprintf(stderr, "n_cur = %d\n", n_cur);
-
       t_cur += 20;
-      /* usleep(20 * 1000); */
     }
 
     pthread_mutex_unlock(&mutex_barreira);
     pthread_barrier_wait(&barreira);
     primeiro_a_chegar = True;
-    /* if (debugOn) fprintf(stderr, "Eu %d comecei meu trabalho\n", PID); */
   }
 
   return NULL;
@@ -240,29 +213,36 @@ void *ciclista(void *argv) {
 
 void mostreUso() {
   fprintf(stderr, "Faltando parâmetros, para usar digite:\n"
-                  "./ep2 <d> <n>\n");
+                  "./ep2 d n <debug>,\n"
+                  "onde debug indica que o modo debug será ligado caso 1.\n");
 }
+
 int main(int argc, char *argv[]) {
   if (argc < 3) {
     mostreUso();
     return -1;
   }
+
+  /* Inicializando o rand */
   /* srand(time(NULL)); */
   srand(0);
 
+  /* Pegando parâmetros da entrada */
   d = atoi(argv[1]);
   n = atoi(argv[2]);
 
+  /* Definindo variáveis globais */
   n_cur = n;
   t_cur = 0;
   t_sec_cur = 0;
   ult = 1;
-
+  debugOn = (argc > 3);
   for (int i = 0; i < 2 * n; i++) {
     ranking[i] = NULL;
     quebraram[i] = 0;
   }
 
+  /* Inicializando mutexes e barreiras */
   pthread_barrier_init(&barreira, NULL, n_cur);
 
   pthread_mutex_init(&mutex_barreira, NULL);
@@ -274,7 +254,7 @@ int main(int argc, char *argv[]) {
       pthread_mutex_init(&mutex_pista[i][j], NULL);
     }
 
-  /* condições iniciais dos ciclistas */
+  /* Condições iniciais dos ciclistas */
   for (int i = 0; i < n; i++) {
     metro(i) = d - (i / (FAIXAS / 2)) - 1;
 
@@ -287,30 +267,33 @@ int main(int argc, char *argv[]) {
     chegou(i) = -1;
   }
 
+  /* Imprimir a condição inicial caso debugOn */
   if (debugOn) debugar();
 
+  /* Iniciando os ciclistas */
   int *temp;
   for (int i = 0; i < n; i++) {
     temp = malloc(sizeof(int));
     *temp = i;
-    fprintf(stderr, "Criando %d com velocidade %d\n", i, velocidade(i));
+    if (debugOn) fprintf(stderr, "Criando %d\n", i);
     pthread_create(&threads[i], NULL, ciclista, (void *) temp);
   }
 
+  /* Esperando todos terminarem a corrida */
   for (int i = 0; i < n; i++) pthread_join(threads[i], NULL);
 
+  /* Liberando os mutexes, barreiras e nossas listas ligadas */
   pthread_mutex_destroy(&mutex_barreira);
   pthread_mutex_destroy(&mutex_eliminado);
 
   for (int i = 0; i < d; ++i)
-    for (int j = 0; j < FAIXAS; ++j) {
-      pthread_mutex_destroy(&mutex_pista[i][j]);
-    }
+    for (int j = 0; j < FAIXAS; ++j) pthread_mutex_destroy(&mutex_pista[i][j]);
 
   pthread_barrier_destroy(&barreira);
 
   for (int i = 0; i < 2 * n; i++)
     if (ranking[i]) freeList(ranking[i]);
 
+  /* Fim da corrida. Obrigado aos ciclistas participantes =) */
   return 0;
 }
