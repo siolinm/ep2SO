@@ -3,8 +3,6 @@
 
 #include <pthread.h>
 
-#include "linkedList.h"
-
 typedef enum { False, True } Bool;
 
 #define D_MAX 2000
@@ -24,8 +22,19 @@ typedef struct {
   int round;          // round atual
   int max_round;      // round máximo
   Bool terminou_acao; // se está na barreira de sincronização
-  Bool eliminado;     // se precisa ser eliminado na linha de chegada
+  int eliminado;     // se precisa ser eliminado na linha de chegada
 } competidor;
+
+typedef struct node {
+  int value;
+  struct node *next;
+  struct node *prev;
+} lnode;
+
+typedef struct {
+  lnode *head;
+  int size;
+} llist;
 
 competidor ciclistas[MAX_CICLISTAS];        // Array com todos os ciclistas
 pthread_t threads[MAX_CICLISTAS];           // A thread de cada ciclista

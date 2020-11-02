@@ -4,7 +4,7 @@
 
 #define min(a, b) (a < b ? a : b)
 
-#define COM_COR 1
+#define COM_COR 0
 
 void setPosicao(int PID, int i, int j) {
     metro(PID) = i;
@@ -21,7 +21,7 @@ void debugar() {
     int soma = 0;
     t_sec_cur += t_cur/1000;
     t_cur %= 1000;
-    fprintf(stderr, "tempo: %d s %d ms\n", t_sec_cur, t_cur);
+    fprintf(stderr, "tempo: %d s %d ms ult: %d\n", t_sec_cur, t_cur, ult);
     for (int k = 0; k < d; k += TRECHO) {
         fprintf(stderr, "    ");
 

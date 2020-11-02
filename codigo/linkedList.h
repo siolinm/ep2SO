@@ -1,20 +1,13 @@
 #ifndef linked_list
 #define linked_list
-
-
-typedef struct node {
-  int value;
-  struct node *next;
-} lnode;
-
-typedef struct {
-  lnode *head, *tail;
-  int size;
-} llist;
+#include "util.h"
 
 llist *initList();
 llist *push(llist *l, int v);
+void pop(llist * l);
+int getLast(llist * l);
 void print(llist *l);
 void freeList(llist *l);
+void update(llist * l);
 
 #endif /* ifndef linked_list */
