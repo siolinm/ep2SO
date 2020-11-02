@@ -4,7 +4,7 @@
 
 #define min(a, b) (a < b ? a : b)
 
-#define COM_COR 1
+#define COM_COR 0
 
 void debugar() {
   char c;

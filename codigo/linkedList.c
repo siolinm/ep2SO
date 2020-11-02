@@ -6,7 +6,7 @@
 llist *initList() {
   llist *l;
   l = (llist *) malloc(sizeof(llist));
-  l->head = (lnode *) malloc(sizeof(lnode));  
+  l->head = (lnode *) malloc(sizeof(lnode));
   l->head->next = l->head->prev = l->head;
   l->size = 0;
 
@@ -29,6 +29,10 @@ llist *push(llist *l, int v) {
 
 Bool isEmpty(llist * l){
   return (l->size == 0);
+}
+
+int getSize(llist *l) {
+  return (l == NULL ? 0 : l->size);
 }
 
 void pop(llist * l){
@@ -56,7 +60,7 @@ void update(llist * l){
     aux = next;
     next = aux->next;
     prev = aux->prev;
-  }  
+  }
 }
 
 int getLast(llist * l){
@@ -72,7 +76,7 @@ void print(llist *l) {
     fprintf(stderr, "\t%dº: %d\n", count++, ln->value);
     ln = ln->next;
   }
-  fprintf(stderr, "]\n");    
+  fprintf(stderr, "]\n");
 }
 
 void freeList(llist *l) {

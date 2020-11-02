@@ -19,7 +19,7 @@ typedef struct {
   int round;          // round atual
   int max_round;      // round máximo
   Bool terminou_acao; // se está na barreira de sincronização
-  int eliminado;     // se precisa ser eliminado na linha de chegada
+  int eliminado;      // se precisa ser eliminado na linha de chegada
 } competidor;
 
 typedef struct node {
@@ -43,7 +43,7 @@ pthread_mutex_t mutex_barreira; // Mutex de acesso à barreira
 
 Bool ciclistaEliminado;          // Marca que algum ciclista foi eliminado
 llist *ranking[MAX_CICLISTAS];   // Vetor com as classificações por volta
-int quebraram[MAX_CICLISTAS];    // Vetor de ciclistas quebrados
+llist *quebraram[MAX_CICLISTAS]; // Vetor de ciclistas quebrados por volta
 int ult;                         // A última volta em que alguém foi eliminado
 pthread_mutex_t mutex_eliminado; // Mutex de proteção
 

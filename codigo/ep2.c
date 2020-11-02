@@ -9,10 +9,11 @@
 Bool chegouChegada(int PID) {
   double randValue;
   Bool quebrouOuEliminado = False;
+  int aux;
 
   volta_atual(PID) += 1;
 
-  if (volta_atual(PID) == 0){
+  if (volta_atual(PID) == 0) {
     pthread_mutex_lock(&mutex_eliminado);
     if (ranking[0] == NULL) // primeiro a chegar
       ranking[0] = initList();
@@ -20,24 +21,28 @@ Bool chegouChegada(int PID) {
     push(ranking[0], PID);
     fprintf(stderr, "volta %d, ult %d : \n", 0, ult);
     print(ranking[0]);
-    if(ranking[0]->size == n)
-      ult++;
+    if (ranking[0]->size == n) ult++;
     pthread_mutex_unlock(&mutex_eliminado);
     return False;
   }
 
   pthread_mutex_lock(&mutex_eliminado);
-  /*if (eliminado(PID)) {
+  if (eliminado(PID)) {
     pthread_mutex_unlock(&mutex_eliminado);
     return True;
-  }*/
+  }
 
   /* ver se quebrou? */
   if (n_cur > 5 && volta_atual(PID) % 6 == 0) {
     randValue = (((double) rand()) / RAND_MAX);
-    if (randValue < 0.05) { /* quebrou */
+    if (randValue < 0.5) { /* quebrou */
       quebrouOuEliminado = True;
-      quebraram[volta_atual(PID)]++;
+      if (!quebraram[volta_atual(PID)])
+        quebraram[volta_atual(PID)] = initList();
+      push(quebraram[volta_atual(PID)], PID);
+
+      if (debugOn)
+        fprintf(stderr, "PID %d quebrou na volta %d.\n", PID, volta_atual(PID));
     }
   }
 
@@ -46,21 +51,26 @@ Bool chegouChegada(int PID) {
       ranking[volta_atual(PID)] = initList();
 
     push(ranking[volta_atual(PID)], PID);
-    fprintf(stderr, "volta %d, ult %d : \n", volta_atual(PID), ult);
+    fprintf(stderr, "\nvolta %d, ult %d : \n", volta_atual(PID), ult);
     print(ranking[volta_atual(PID)]);
     /* getchar(); */
   }
 
+  aux = (ult == 1 ? 0 : ult % 2);
+  fprintf(stderr, "%d + %d = %d - %d\n", getSize(ranking[ult]),
+          getSize(quebraram[ult]), getSize(ranking[ult - 1]), aux);
   while (ranking[ult] && ult && ranking[ult]->size != 1 &&
-          ranking[ult]->size + quebraram[ult] == ranking[ult - 1]->size) {
-    if (ult % 2 == 0){
+         ranking[ult]->size + getSize(quebraram[ult]) ==
+             ranking[ult - 1]->size - aux) {
+    if (ult % 2 == 0) {
       int i = getLast(ranking[ult]);
       eliminado(i) = ult; // aviso para quando ele passar pela chegada
-      quebraram[ult+1]++; // seria melhor se quebraram se chamasse eliminados
+      /* if (!quebraram[ult + 1]) quebraram[ult + 1] = initList(); */
+      /* push(quebraram[ult + 1], PID); */
       fprintf(stderr, "PID %d eliminado na volta %d.\n", i, ult);
-      getchar();
+      /* getchar(); */
     }
-    if (debugOn){
+    if (debugOn) {
       fprintf(stderr, "volta completada %d : \n", ult);
       print(ranking[ult]);
     }
@@ -68,6 +78,8 @@ Bool chegouChegada(int PID) {
     ult++;
 
     if (ranking[ult]) update(ranking[ult]);
+    if (quebraram[ult]) update(quebraram[ult]);
+    aux = (ult == 1 ? 0 : ult % 2);
   }
   quebrouOuEliminado = (quebrouOuEliminado || eliminado(PID));
   pthread_mutex_unlock(&mutex_eliminado);
@@ -245,10 +257,7 @@ int main(int argc, char *argv[]) {
   ult = 0;
   debugOn = (argc > 3);
 
-  for (int i = 0; i < 2 * n; i++) {
-    ranking[i] = NULL;
-    quebraram[i] = 0;
-  }
+  for (int i = 0; i < 2 * n; i++) { quebraram[i] = ranking[i] = NULL; }
 
   /* Inicializando mutexes e barreiras */
   pthread_barrier_init(&barreira, NULL, n_cur);
@@ -303,6 +312,8 @@ int main(int argc, char *argv[]) {
   for (int i = 0; i < 2 * n; i++)
     if (ranking[i]) freeList(ranking[i]);
 
+  fprintf(stderr,
+          "\n\nFim da corrida. Obrigado aos ciclistas participantes =)\n");
   /* Fim da corrida. Obrigado aos ciclistas participantes =) */
   return 0;
 }
