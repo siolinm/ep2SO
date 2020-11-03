@@ -10,6 +10,7 @@ slides.out
 slides.dvi
 slides.nav
 slides.snm
+slides.synctex.gz
 
 *.tar
 *.tar.gz

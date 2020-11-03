@@ -6,6 +6,8 @@
 #include "linkedList.h"
 #include "util.h"
 
+#define DEBUG_COND 0
+
 Bool chegouChegada(int PID) {
   double rand_value;
   int aux;
@@ -73,7 +75,8 @@ Bool chegouChegada(int PID) {
     if (ranking[volta_atual(PID)] == NULL) // primeiro a chegar
       ranking[volta_atual(PID)] = initList();
 
-    fprintf(stderr, "PID %d classificou na volta %d.\n", PID+1, volta_atual(PID));
+    fprintf(stderr, "PID %d classificou na volta %d.\n", PID + 1,
+            volta_atual(PID));
     push(ranking[volta_atual(PID)], PID);
   }
 
@@ -299,7 +302,7 @@ int main(int argc, char *argv[]) {
   n_terminaram = 0;
   max_voltas = 2 * (n - 1);
   alguem_a_90 = ((((double) rand()) / RAND_MAX) < 0.1);
-  debug_on = (argc > 3);
+  debug_on = DEBUG_COND;
 
   for (int i = 0; i < 2 * n; i++) quebraram[i] = ranking[i] = NULL;
 
@@ -339,6 +342,12 @@ int main(int argc, char *argv[]) {
     *temp = i;
     pthread_create(&threads[i], NULL, ciclista, (void *) temp);
   }
+
+  char myCmd[1000];
+  sprintf(myCmd,
+          "grep VmPeak /proc/$(pgrep ep2)/status >> relatorio%d-%d-%d.txt", d,
+          n, atoi(argv[3]));
+  system(myCmd);
 
   /* Esperando todos terminarem a corrida */
   for (int i = 0; i < n; i++) pthread_join(threads[i], NULL);
