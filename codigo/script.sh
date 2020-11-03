@@ -13,18 +13,18 @@ rm relatorio*
 
 ciclista=$CICLISTAS_NORMAL
 for pista in $PISTA_PEQUENA $PISTA_MEDIA $PISTA_GRANDE; do
-  for i in {1..30}; do
+  for i in {1..10}; do
     { time ./ep2 $pista $ciclista $i 2> teste$pista-$ciclista-$i.txt
     } 2>> relatorio$pista-$ciclista-$i.txt
-    # echo $ciclista-$pista-$i
+    echo $ciclista-$pista-$i
   done
 done
 
 pista=$PISTA_MEDIA
 for ciclista in $CICLISTAS_POUCOS $CICLISTAS_MUITOS; do
-  for i in {1..30}; do
+  for i in {1..10}; do
     { time ./ep2 $pista $ciclista $i 2> teste$pista-$ciclista-$i.txt
     } 2>> relatorio$pista-$ciclista-$i.txt
-    # echo $ciclista-$pista-$i
+    echo $ciclista-$pista-$i
   done
 done
