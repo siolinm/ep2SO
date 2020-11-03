@@ -345,7 +345,7 @@ int main(int argc, char *argv[]) {
 
   char myCmd[1000];
   sprintf(myCmd,
-          "grep VmPeak /proc/$(pgrep ep2)/status >> relatorio%d-%d-%d.txt", d,
+          "{ pmap $(pgrep ep2) | grep total ; } >> relatorio%d-%d-%d.txt", d,
           n, atoi(argv[3]));
   system(myCmd);
 
