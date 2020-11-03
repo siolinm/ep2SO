@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "util.h"
+
 llist *initList() {
   llist *l;
   l = (llist *) malloc(sizeof(llist));
@@ -27,16 +29,12 @@ llist *push(llist *l, int v) {
   return l;
 }
 
-Bool isEmpty(llist * l){
-  return (l->size == 0);
-}
+Bool isEmpty(llist *l) { return (l->size == 0); }
 
-int getSize(llist *l) {
-  return (l == NULL ? 0 : l->size);
-}
+int getSize(llist *l) { return (l == NULL ? 0 : l->size); }
 
-void pop(llist * l){
-  lnode * aux;
+void pop(llist *l) {
+  lnode *aux;
   aux = l->head->prev;
   l->head->prev = aux->prev;
   l->head->prev->next = l->head;
@@ -44,14 +42,14 @@ void pop(llist * l){
   free(aux);
 }
 
-void update(llist * l){
-  lnode * aux, * prev, *next;
+void update(llist *l) {
+  lnode *aux, *prev, *next;
   aux = l->head->next;
   next = aux->next;
   prev = aux->prev;
 
-  while(aux != l->head){
-    if(eliminado(aux->value)){
+  while (aux != l->head) {
+    if (eliminado(aux->value) && t_quebrou(aux->value) == -1) {
       next->prev = aux->prev;
       prev->next = next;
       l->size--;
@@ -63,9 +61,7 @@ void update(llist * l){
   }
 }
 
-int getLast(llist * l){
-  return l->head->prev->value;
-}
+int getLast(llist *l) { return l->head->prev->value; }
 
 void print(llist *l) {
   lnode *ln = l->head->next;
@@ -73,7 +69,7 @@ void print(llist *l) {
 
   fprintf(stderr, "[\n");
   while (ln != l->head) {
-    fprintf(stderr, "\t%dº: %d\n", count++, ln->value);
+    fprintf(stderr, "\t%dº: %d\n", count++, ln->value + 1);
     ln = ln->next;
   }
   fprintf(stderr, "]\n");

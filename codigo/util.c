@@ -7,13 +7,12 @@
 #define COM_COR 0
 
 void debugar() {
-  char c;
   int soma = 0;
 
   t_sec_cur += t_cur / 1000;
   t_cur %= 1000;
-  fprintf(stderr, "tempo: %d s %d ms\n", t_sec_cur, t_cur);
-  fprintf(stderr, "ult = %d n_cur = %d\n", ult, n_cur);
+
+  fprintf(stderr, "\ntempo: %d s %d ms\n", t_sec_cur, t_cur);
   for (int k = 0; k < d; k += TRECHO) {
     fprintf(stderr, "    ");
 
@@ -23,15 +22,13 @@ void debugar() {
     for (int i = k; i < min(k + TRECHO, d); i++) fprintf(stderr, "------");
     fprintf(stderr, "\n");
 
-    soma = 0;
     for (int j = 0; j < FAIXAS; j++) {
       fprintf(stderr, "%2d |", j + 1);
       for (int i = k; i < min(k + TRECHO, d); i++) {
         if (pista(i, j) == 0)
           fprintf(stderr, " %5d", pista(i, j));
         else if (COM_COR) // 32 -> verde
-          fprintf(stderr, " \033[1;%dm%2d:%2d\033[0m", 32, pista(i, j) - 1,
-                  velocidade(pista(i, j) - 1));
+          fprintf(stderr, " \033[1;%dm%5d\033[0m", 32, pista(i, j));
         else
           fprintf(stderr, " %5d", pista(i, j));
         soma += pista(i, j);
@@ -39,9 +36,6 @@ void debugar() {
       fprintf(stderr, "\n");
     }
   }
-  if (n == n_cur && soma != (n + 1) * n / 2) {
-    fprintf(stderr, "ERRO\n");
-    scanf(" %c", &c);
-  }
-  /* scanf(" %c", &c); */
+
+  /* if (n == n_cur && soma != (n + 1) * n / 2) fprintf(stderr, "ERRO\n"); */
 }

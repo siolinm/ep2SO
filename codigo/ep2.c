@@ -7,55 +7,77 @@
 #include "util.h"
 
 Bool chegouChegada(int PID) {
-  double randValue;
-  Bool quebrouOuEliminado = False;
+  double rand_value;
   int aux;
+  Bool quebrou_ou_eliminado = False;
+  Bool atingiu_max = False;
 
+  /* chegou na chegada, entao incrementamos a volta do ciclista */
   volta_atual(PID) += 1;
+  t_eliminado(PID) = t_sec_cur * 1000 + t_cur;
 
+  /* caso de exceção para a primeira volta */
   if (volta_atual(PID) == 0) {
     pthread_mutex_lock(&mutex_eliminado);
     if (ranking[0] == NULL) // primeiro a chegar
       ranking[0] = initList();
-
     push(ranking[0], PID);
-    fprintf(stderr, "volta %d, ult %d : \n", 0, ult);
-    print(ranking[0]);
+
     if (ranking[0]->size == n) ult++;
+
     pthread_mutex_unlock(&mutex_eliminado);
     return False;
   }
 
   pthread_mutex_lock(&mutex_eliminado);
+
+  /* ver se deveria já ter sido eliminado */
   if (eliminado(PID)) {
+    n_cur--;
+
+    if (velocidade(PID) == 90) // PID ñ deveria estar a 90 (foi eliminado antes)
+      alguem_a_90 = 2;
+
     pthread_mutex_unlock(&mutex_eliminado);
     return True;
   }
 
+  /* ver se o ciclista já terminou a corrida e deve sair da pista */
+  if (volta_atual(PID) >= max_voltas) {
+    n_terminaram++;
+
+    fprintf(stderr, "Ciclista %d parou de correr.\n", PID + 1);
+    atingiu_max = True;
+  }
+
   /* ver se quebrou? */
-  if (n_cur > 5 && volta_atual(PID) % 6 == 0) {
-    randValue = (((double) rand()) / RAND_MAX);
-    if (randValue < 0.5) { /* quebrou */
-      quebrouOuEliminado = True;
-      if (!quebraram[volta_atual(PID)])
+  if (!atingiu_max && n_cur > 5 && volta_atual(PID) != 1 &&
+      volta_atual(PID) % 6 == 1) {
+    rand_value = (((double) rand()) / RAND_MAX);
+    if (rand_value < 0.05) { /* quebrou */
+      quebrou_ou_eliminado = True;
+      eliminado(PID) = volta_atual(PID) - 1;
+      if (quebraram[volta_atual(PID)] == NULL)
         quebraram[volta_atual(PID)] = initList();
       push(quebraram[volta_atual(PID)], PID);
 
-      if (debugOn)
-        fprintf(stderr, "PID %d quebrou na volta %d.\n", PID, volta_atual(PID));
+      t_quebrou(PID) = t_sec_cur * 1000 + t_cur;
+
+      fprintf(stderr, "Ciclista %d quebrou após completar a volta %d.\n",
+              PID + 1, volta_atual(PID) - 1);
     }
   }
 
-  if (!quebrouOuEliminado) {
+  /* se não queboru ou foi eliminado, então classificou para a próxima volta */
+  if (!quebrou_ou_eliminado) {
     if (ranking[volta_atual(PID)] == NULL) // primeiro a chegar
       ranking[volta_atual(PID)] = initList();
 
+    fprintf(stderr, "PID %d classificou na volta %d.\n", PID+1, volta_atual(PID));
     push(ranking[volta_atual(PID)], PID);
-    fprintf(stderr, "\nvolta %d, ult %d : \n", volta_atual(PID), ult);
-    print(ranking[volta_atual(PID)]);
-    /* getchar(); */
   }
 
+  /* caso ele seja o último de uma volta, devemos processa-la  */
   aux = (ult == 1 ? 0 : ult % 2);
   fprintf(stderr, "%d + %d = %d - %d\n", getSize(ranking[ult]),
           getSize(quebraram[ult]), getSize(ranking[ult - 1]), aux);
@@ -65,15 +87,13 @@ Bool chegouChegada(int PID) {
     if (ult % 2 == 0) {
       int i = getLast(ranking[ult]);
       eliminado(i) = ult; // aviso para quando ele passar pela chegada
-      /* if (!quebraram[ult + 1]) quebraram[ult + 1] = initList(); */
-      /* push(quebraram[ult + 1], PID); */
-      fprintf(stderr, "PID %d eliminado na volta %d.\n", i, ult);
-      /* getchar(); */
+      max_voltas = ult + 2 * (ranking[ult]->size - 2);
+
+      fprintf(stderr, "Ciclista %d eliminado na volta %d.\n", i + 1, ult);
     }
-    if (debugOn) {
-      fprintf(stderr, "volta completada %d : \n", ult);
-      print(ranking[ult]);
-    }
+
+    fprintf(stderr, "Volta completada nº %d:\n", ult);
+    print(ranking[ult]);
 
     ult++;
 
@@ -81,27 +101,48 @@ Bool chegouChegada(int PID) {
     if (quebraram[ult]) update(quebraram[ult]);
     aux = (ult == 1 ? 0 : ult % 2);
   }
-  quebrouOuEliminado = (quebrouOuEliminado || eliminado(PID));
+
+  /* se na hora que eu cruzei, vi que eu era o último, então estou eliminado */
+  quebrou_ou_eliminado = (quebrou_ou_eliminado || eliminado(PID));
+  if (!atingiu_max && quebrou_ou_eliminado) {
+    n_cur--;
+
+    if (velocidade(PID) == 90) // PID ñ deveria estar a 90 (foi eliminado antes)
+      alguem_a_90 = 2;
+  }
+
   pthread_mutex_unlock(&mutex_eliminado);
 
   /* mudar a minha velocidade */
-  if (!quebrouOuEliminado) {
-    randValue = (((double) rand()) / RAND_MAX);
-    if (velocidade(PID) == 30 && randValue < 0.8)
+  if (!atingiu_max && !quebrou_ou_eliminado) {
+    rand_value = (((double) rand()) / RAND_MAX);
+    if (velocidade(PID) == 30 && rand_value < 0.8)
       velocidade(PID) = 60;
-    else if (velocidade(PID) == 60 && randValue < 0.4)
+    else if (velocidade(PID) == 60 && rand_value < 0.4)
       velocidade(PID) = 30;
 
     pthread_mutex_lock(&mutex_eliminado);
-    /* TODO: Perguntar no fórum se é isso ou se é 10% de ter um a 90 <30-10-20,
-     * Lucas> */
-    if (n_cur <= 2 && randValue < 0.1) velocidade(PID) = 90;
+    if (alguem_a_90 > 0 && max_voltas - volta_atual(PID) <= 2) {
+      if (alguem_a_90 == 1) {
+        rand_value = (((double) rand()) / RAND_MAX);
+        if (rand_value < 0.5) { // eu fico a 90
+          velocidade(PID) = 90;
+          alguem_a_90 = -1;
+        } else
+          alguem_a_90 = 2; // o segundo fica
+
+      } else {
+        velocidade(PID) = 90;
+        alguem_a_90 = -1;
+      }
+    }
     pthread_mutex_unlock(&mutex_eliminado);
   }
 
-  return quebrouOuEliminado;
+  return (quebrou_ou_eliminado || atingiu_max);
 }
 
+/* função chamada quando o ciclista anda um metro para frente */
 void andarPara(int PID, int i, int j, Bool *andei, Bool *fuiEliminado) {
   int cur_i, cur_j;
 
@@ -144,6 +185,7 @@ void *ciclista(void *argv) {
   /* Esperando pela largada */
   pthread_barrier_wait(&barreira);
 
+  /* A thread roda até ser eliminada  */
   while (!fuiEliminado) {
     if (round(PID) == 0) {
       i = metro(PID);
@@ -157,7 +199,7 @@ void *ciclista(void *argv) {
 
       while (vpista(f) != 0 && !terminou_acao(vpista(f) - 1)) {
         pthread_mutex_unlock(&mutex_pista[f[0]][f[1]]);
-        usleep(200000);
+        usleep(2000);
         pthread_mutex_lock(&mutex_pista[f[0]][f[1]]);
       }
 
@@ -184,10 +226,8 @@ void *ciclista(void *argv) {
 
       if (fuiEliminado) { /* foi eliminado */
         pthread_mutex_lock(&mutex_eliminado);
-        n_cur--;
         ciclistaEliminado = True;
         pista(metro(PID), faixa(PID)) = 0;
-        // fprintf(stderr, "%d foi eliminado.\n", PID);
         pthread_mutex_unlock(&mutex_eliminado);
       }
 
@@ -195,29 +235,31 @@ void *ciclista(void *argv) {
       max_round(PID) = 180 / velocidade(PID);
     }
 
+    /* Antes de terminar a ação, incrementamos o round */
     round(PID) = (round(PID) + 1) % max_round(PID);
 
+    /* Terminou a ação  */
     terminou_acao(PID) = True;
 
     pthread_barrier_wait(&barreira);
+
+    /* Ações de sincronização */
     if (fuiEliminado) break;
     pthread_mutex_lock(&mutex_barreira);
 
     terminou_acao(PID) = False;
-    if (n_cur == 1) fuiEliminado = True;
+    if (n_cur == 1) { fuiEliminado = True; }
 
     if (primeiro_a_chegar) {
       primeiro_a_chegar = False;
 
       if (ciclistaEliminado) {
         pthread_barrier_destroy(&barreira);
-        pthread_barrier_init(&barreira, NULL, n_cur);
+        pthread_barrier_init(&barreira, NULL, n_cur - n_terminaram);
         ciclistaEliminado = False;
       }
 
-      if (debugOn && ((t_cur % 60 == 0) || (n_cur <= 2 && t_cur % 20 == 0))) {
-        debugar();
-      }
+      if (debug_on && (t_cur % 60 == 0 || alguem_a_90 == -1)) debugar();
 
       t_cur += 20;
     }
@@ -243,8 +285,7 @@ int main(int argc, char *argv[]) {
   }
 
   /* Inicializando o rand */
-  /* srand(time(NULL)); */
-  srand(0);
+  srand(time(NULL));
 
   /* Pegando parâmetros da entrada */
   d = atoi(argv[1]);
@@ -255,9 +296,12 @@ int main(int argc, char *argv[]) {
   t_cur = 0;
   t_sec_cur = 0;
   ult = 0;
-  debugOn = (argc > 3);
+  n_terminaram = 0;
+  max_voltas = 2 * (n - 1);
+  alguem_a_90 = ((((double) rand()) / RAND_MAX) < 0.1);
+  debug_on = (argc > 3);
 
-  for (int i = 0; i < 2 * n; i++) { quebraram[i] = ranking[i] = NULL; }
+  for (int i = 0; i < 2 * n; i++) quebraram[i] = ranking[i] = NULL;
 
   /* Inicializando mutexes e barreiras */
   pthread_barrier_init(&barreira, NULL, n_cur);
@@ -280,25 +324,48 @@ int main(int argc, char *argv[]) {
 
     velocidade(i) = 30;
     volta_atual(i) = -1;
-    quando_quebrou(i) = -1;
-    chegou(i) = -1;
+    t_quebrou(i) = -1;
+    t_eliminado(i) = -1;
     eliminado(i) = 0;
   }
 
-  /* Imprimir a condição inicial caso debugOn */
-  if (debugOn) debugar();
+  /* Imprimir a condição inicial caso debug_on */
+  if (debug_on) debugar();
 
   /* Iniciando os ciclistas */
   int *temp;
   for (int i = 0; i < n; i++) {
     temp = malloc(sizeof(int));
     *temp = i;
-    if (debugOn) fprintf(stderr, "Criando %d\n", i);
     pthread_create(&threads[i], NULL, ciclista, (void *) temp);
   }
 
   /* Esperando todos terminarem a corrida */
   for (int i = 0; i < n; i++) pthread_join(threads[i], NULL);
+
+  /* Estatísticas do fim da corrida  */
+  int j = n - 1;
+  for (int i = 0; i < n; i++) {
+    if (t_quebrou(i) != -1)
+      rank_final[j--] = i;
+    else
+      rank_final[eliminado(i) / 2] = i;
+    fprintf(stderr, "eliminado(%d) = %d\n", i + 1, eliminado(i));
+  }
+
+  fprintf(stderr, "\n\nRank final:\n\t%dº: %d no instante %d ganhou.\n", 1,
+          rank_final[0] + 1, t_eliminado(rank_final[0]));
+  for (int i = j; i >= 1; i--) {
+    fprintf(stderr, "\t%dº: %d no instante %d após completar a volta %d.\n",
+            j - i + 2, rank_final[i] + 1, t_eliminado(rank_final[i]),
+            eliminado(rank_final[i]));
+  }
+  fprintf(stderr, "Quebrados:\n");
+  for (++j; j < n; j++) {
+    fprintf(stderr, "\t%d quebrou no instante %d após completar a volta %d.\n",
+            rank_final[j] + 1, t_quebrou(rank_final[j]),
+            eliminado(rank_final[j]));
+  }
 
   /* Liberando os mutexes, barreiras e nossas listas ligadas */
   pthread_mutex_destroy(&mutex_barreira);
@@ -317,3 +384,6 @@ int main(int argc, char *argv[]) {
   /* Fim da corrida. Obrigado aos ciclistas participantes =) */
   return 0;
 }
+
+/* 3, 5, 2 */
+
