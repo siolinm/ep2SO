@@ -6,8 +6,6 @@
 #include "linkedList.h"
 #include "util.h"
 
-#define DEBUG_COND 0
-
 Bool chegouChegada(int PID) {
   double rand_value;
   int aux;
@@ -48,7 +46,6 @@ Bool chegouChegada(int PID) {
   if (volta_atual(PID) >= max_voltas) {
     n_terminaram++;
 
-    fprintf(stderr, "Ciclista %d parou de correr.\n", PID + 1);
     atingiu_max = True;
   }
 
@@ -65,7 +62,7 @@ Bool chegouChegada(int PID) {
 
       t_quebrou(PID) = t_sec_cur * 1000 + t_cur;
 
-      fprintf(stderr, "Ciclista %d quebrou após completar a volta %d.\n",
+      fprintf(stderr, "Ciclista %d quebrou (após completar a volta %d).\n",
               PID + 1, volta_atual(PID) - 1);
     }
   }
@@ -75,15 +72,11 @@ Bool chegouChegada(int PID) {
     if (ranking[volta_atual(PID)] == NULL) // primeiro a chegar
       ranking[volta_atual(PID)] = initList();
 
-    fprintf(stderr, "PID %d classificou na volta %d.\n", PID + 1,
-            volta_atual(PID));
     push(ranking[volta_atual(PID)], PID);
   }
 
   /* caso ele seja o último de uma volta, devemos processa-la  */
   aux = (ult == 1 ? 0 : ult % 2);
-  fprintf(stderr, "%d + %d = %d - %d\n", getSize(ranking[ult]),
-          getSize(quebraram[ult]), getSize(ranking[ult - 1]), aux);
   while (ranking[ult] && ult && ranking[ult]->size != 1 &&
          ranking[ult]->size + getSize(quebraram[ult]) ==
              ranking[ult - 1]->size - aux) {
@@ -302,7 +295,7 @@ int main(int argc, char *argv[]) {
   n_terminaram = 0;
   max_voltas = 2 * (n - 1);
   alguem_a_90 = ((((double) rand()) / RAND_MAX) < 0.1);
-  debug_on = DEBUG_COND;
+  debug_on = (argc > 3);
 
   for (int i = 0; i < 2 * n; i++) quebraram[i] = ranking[i] = NULL;
 
@@ -343,12 +336,6 @@ int main(int argc, char *argv[]) {
     pthread_create(&threads[i], NULL, ciclista, (void *) temp);
   }
 
-  char myCmd[1000];
-  sprintf(myCmd,
-          "{ pmap $(pgrep ep2) | grep total ; } >> relatorio%d-%d-%d.txt", d,
-          n, atoi(argv[3]));
-  system(myCmd);
-
   /* Esperando todos terminarem a corrida */
   for (int i = 0; i < n; i++) pthread_join(threads[i], NULL);
 
@@ -359,7 +346,6 @@ int main(int argc, char *argv[]) {
       rank_final[j--] = i;
     else
       rank_final[eliminado(i) / 2] = i;
-    fprintf(stderr, "eliminado(%d) = %d\n", i + 1, eliminado(i));
   }
 
   fprintf(stderr, "\n\nRank final:\n\t%dº: %d no instante %d ganhou.\n", 1,
@@ -385,14 +371,13 @@ int main(int argc, char *argv[]) {
 
   pthread_barrier_destroy(&barreira);
 
-  for (int i = 0; i < 2 * n; i++)
+  for (int i = 0; i < 2 * n; i++) {
     if (ranking[i]) freeList(ranking[i]);
+    if (quebraram[i]) freeList(quebraram[i]);
+  }
 
   fprintf(stderr,
           "\n\nFim da corrida. Obrigado aos ciclistas participantes =)\n");
   /* Fim da corrida. Obrigado aos ciclistas participantes =) */
   return 0;
 }
-
-/* 3, 5, 2 */
-

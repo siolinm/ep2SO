@@ -18,7 +18,7 @@
             \item Cada ciclista possui uma \texttt{struct} própria com todas
                 as informações necessárias para a corrida e as estatísticas;
             \item Essas \texttt{structs} ficam armazenadas em um vetor global
-                chamado \texttt{ciclistas}.
+                chamado \texttt{ciclistas};
             \item Enquanto isso, as threads de cada ciclista ficam em um vetor
                 à parte chamado \texttt{threads}.
 
@@ -36,6 +36,9 @@
             \item Além disso, existe uma matriz \texttt{mutex\_pista} de mesmas
               dimensões com um \textit{mutex} para cada posição da pista.
         \end{itemize}
+        \textbf{Obs.:} Existe uma constante chamada \texttt{COM\_COR} em
+        \texttt{util.c} que, quando alterada para $1$, realiza a depuração da
+        pista colorindo os ciclistas na saída.
     \end{frame}
 
     \begin{frame}{Detalhes de Implementação - O movimento - 1}
@@ -57,9 +60,10 @@
         \justifying
         \item Se ele está a mais que $30$ Km/h e não conseguiu andar para
           frente, então ele tenta ultrapassar (verificando as faixas mais
-          externas). Na verificação, se ele não conseguir travar o
+          externas);
+        \item Na verificação, se ele não conseguir travar o
           \textit{mutex} por qualquer motivo, então tenta a próxima faixa mais
-          externa;
+          externa.
       \end{itemize}
     \end{frame}
 
@@ -68,12 +72,12 @@
         \justifying
         \item Nós dividimos as interações dos ciclistas em \textbf{turnos}. Cada
           final de turno é protegido por uma barreira, para garantir que todos
-          os ciclistas então sincronizados em seus turnos.
-        \item A velocidade de um ciclista é definida através de quantos em
-          quantos turnos um ciclista se movimenta.
+          os ciclistas então sincronizados em seus turnos;
+        \item Os turnos em que um ciclista se movimenta são definidos de acordo
+          com sua velocidade;
         \item Ciclistas a $30$ Km/h se movimentam de $6$ em $6$, enquanto os a
-          $60$ se movimentam de $3$ em $3$ e os a $90$, de $2$ em $2$.
-        \item Dessa forma, cada \textbf{turno} representa $20$ ms de simulação.
+          $60$ se movimentam de $3$ em $3$ e os a $90$, de $2$ em $2$;
+        \item Dessa forma, cada \textbf{turno} representa $20$ ms de simulação;
       \end{itemize}
     \end{frame}
 
@@ -117,8 +121,8 @@
       \item Para saber se ela está completa, verificamos se o número de
         ciclistas que já completaram \texttt{ult} menos o número de ciclistas
         que quebraram em \texttt{ult} é igual ao número de ciclistas que
-        completaram \texttt{ult-1}, menos 1 caso \texttt{ult-1} uma volta par,
-        ou seja, alguém foi eliminado.
+        completaram \texttt{ult-1}, menos 1 caso \texttt{ult-1} seja uma volta
+        par, isto é, alguém foi eliminado;
       \end{itemize}
     \end{frame}
 
@@ -130,7 +134,7 @@
       \item Se sim, então marcamos o último ciclista a passar por \texttt{ult}
         como eliminado nessa volta e precisamos verificar agora se a volta
         \texttt{ult+1} também já está completa (caso o último a passar
-        pela volta \texttt{ult} estiver \textit{muito} atrás na corrida).
+        pela volta \texttt{ult} estiver \textit{muito} atrás na corrida);
       \end{itemize}
     \end{frame}
 
@@ -148,7 +152,7 @@
         para a volta \texttt{ult+1};
       \item Com ela, nós sabemos exatamente quantas voltas a corrida terá caso
         todos que estão correndo não quebrem e, assim, conseguimos determinar se
-        alguém está nas duas últimas voltas.
+        alguém está nas duas últimas voltas;
       \end{itemize}
     \end{frame}
 
@@ -156,7 +160,7 @@
       \begin{itemize}
         \item Para decidir se haverá alguém correndo a $90$ Km/h, realizamos um
           teste no início do programa usando a probabilidade de $10\%$;
-        \item Caso um ciclista comece a correr a $90$, mas já deveria ser
+        \item Caso um ciclista comece a correr a $90$ Km/h, mas já deveria ser
           eliminado em uma volta anterior, então, ao ser eliminado, o próximo
           que entrar nas duas últimas voltas, correrá a $90$ Km/h.
       \end{itemize}
@@ -190,6 +194,8 @@
                   scaled y ticks = false,
                   enlarge x limits=0.50,
                   ymin=0,
+                  ylabel={Tempo em segundos},
+                  ylabel style={yshift=0.4cm},
                   legend cell align=left,
                   legend style={at={(0.5,-0.06)},anchor=north},
               ]
@@ -199,7 +205,7 @@
                 y dir=both,
                 y explicit]
               coordinates {
-                  (A, 10) += (0,1) -= (0,1)
+                  (A, 152.6) += (0,14.01) -= (0,14.01)
               };
 
               \addplot[style={fill=blue},
@@ -207,7 +213,7 @@
                 y dir=both,
                 y explicit]
               coordinates {
-                  (A, 10) += (0,1) -= (0,1)
+                  (A, 306.2) += (0,26.32) -= (0,26.32)
               };
 
               \addplot[style={fill=green},
@@ -215,7 +221,7 @@
                 y dir=both,
                 y explicit]
               coordinates {
-                  (A, 10) += (0,1) -= (0,1)
+                  (A, 636.76) += (0,53.16) -= (0,53.16)
               };
 
               \legend{Pista Pequena, Pista Média, Pista Grande}
@@ -238,6 +244,8 @@
                   scaled y ticks = false,
                   enlarge x limits=0.50,
                   ymin=0,
+                  ylabel={Memória em KB},
+                  ylabel style={yshift=0.4cm},
                   legend cell align=left,
                   legend style={at={(0.5,-0.06)},anchor=north},
               ]
@@ -247,7 +255,7 @@
                 y dir=both,
                 y explicit]
               coordinates {
-                  (A, 10) += (0,1) -= (0,1)
+                (A, 5061693.33)
               };
 
               \addplot[style={fill=blue},
@@ -255,7 +263,7 @@
                 y dir=both,
                 y explicit]
               coordinates {
-                  (A, 10) += (0,1) -= (0,1)
+                (A, 5061693.33)
               };
 
               \addplot[style={fill=green},
@@ -263,7 +271,7 @@
                 y dir=both,
                 y explicit]
               coordinates {
-                  (A, 10) += (0,1) -= (0,1)
+                (A, 5061693.33)
               };
 
               \legend{Pista Pequena, Pista Média, Pista Grande}
@@ -272,7 +280,8 @@
         \end{tikzpicture}
     \end{frame}
 
-    \begin{frame}{Tamanho Normal de Pista - Tempo}
+    \begin{frame}[label={segs}]
+      \frametitle{Tamanho Normal de Pista - Tempo}
         \begin{tikzpicture}
               \begin{axis}[
                   width  = 1.00*\textwidth,
@@ -286,6 +295,8 @@
                   scaled y ticks = false,
                   enlarge x limits=0.50,
                   ymin=0,
+                  ylabel={Tempo em segundos},
+                  ylabel style={yshift=0.4cm},
                   legend cell align=left,
                   legend style={at={(0.5,-0.06)},anchor=north},
               ]
@@ -295,7 +306,7 @@
                 y dir=both,
                 y explicit]
               coordinates {
-                  (A, 10) += (0,1) -= (0,1)
+                (A, 0.5) += (0,0.29) -= (0,0.29)
               };
 
               \addplot[style={fill=blue},
@@ -303,7 +314,7 @@
                 y dir=both,
                 y explicit]
               coordinates {
-                  (A, 10) += (0,1) -= (0,1)
+                  (A, 306.26) += (0,26.32) -= (0,26.32)
               };
 
               \addplot[style={fill=green},
@@ -311,8 +322,9 @@
                 y dir=both,
                 y explicit]
               coordinates {
-                  (A, 10) += (0,1) -= (0,1)
+                  (A, 2398.83) += (0,164.27) -= (0,164.27)
               };
+
 
               \legend{Poucos Ciclistas, Quantidade Normal, Muitos Ciclistas}
 
@@ -334,6 +346,8 @@
                   scaled y ticks = false,
                   enlarge x limits=0.50,
                   ymin=0,
+                  ylabel={Memória em KB},
+                  ylabel style={yshift=0.4cm},
                   legend cell align=left,
                   legend style={at={(0.5,-0.06)},anchor=north},
               ]
@@ -343,7 +357,7 @@
                 y dir=both,
                 y explicit]
               coordinates {
-                  (A, 10) += (0,1) -= (0,1)
+                (A, 741418)
               };
 
               \addplot[style={fill=blue},
@@ -351,7 +365,7 @@
                 y dir=both,
                 y explicit]
               coordinates {
-                  (A, 10) += (0,1) -= (0,1)
+                (A, 5061693)
               };
 
               \addplot[style={fill=green},
@@ -359,7 +373,7 @@
                 y dir=both,
                 y explicit]
               coordinates {
-                  (A, 10) += (0,1) -= (0,1)
+                (A, 15824384)
               };
 
               \legend{Poucos Ciclistas, Quantidade Normal, Muitos Ciclistas}
@@ -368,7 +382,33 @@
         \end{tikzpicture}
     \end{frame}
 
-    \begin{frame}{Conclusões}
+    \begin{frame}{Conclusões - Memória}
+      \begin{itemize}
+        \justifying
+        \item Pelos resultados, observamos que o uso de memória não varia com
+          alterações no tamanho da pista. Isso era esperado, pois a pista é
+          alocada estaticamente e nenhuma memória extra é utilizada quando
+          aumentamos o seu tamanho;
+        \item Já nos aumentos da quantidade de ciclistas, o uso de memória
+          aumentou drasticamente, mas foi um valor igual para todos os 30 testes
+          de cada quantidade. Nós esperávamos que houvessem mudanças, pois
+          alocamos as listas ligadas dinamicamente de acordo com os
+          classificados de cada volta e os ciclistas que quebram (o que não é
+          igual em cada teste).
+      \end{itemize}
+    \end{frame}
+
+    \begin{frame}{Conclusões - Tempo}
+      \begin{itemize}
+        \justifying
+        \item Observamos aumento do tempo tanto ao aumentar o número de
+          ciclistas como ao aumentar a pista;
+        \item O aumento do número de ciclistas impactou muito mais o tempo de
+          execução do que o da pista.
+      \end{itemize}
+        \textbf{Obs.:} No slide~\ref{segs}, o tempo médio para poucos
+          ciclistas foi de $0.5$ segundos com intervalo de confiança de $0.29$
+          segundos. Por conta disso, não foi possível a visualização no gráfico.
     \end{frame}
 
     \begin{frame}
