@@ -8,7 +8,7 @@ default: ep2
 ep2: $(EPOBJS)
 	gcc $(CFLAGS) $(EPOBJS) -o ep2 $(LIBS_EP2)
 
-%.o: %.c %.h
+%.o: %.c %.h util.h
 	gcc $(CFLAGS) -c $<
 
 tar:
@@ -27,9 +27,9 @@ tar:
 	done
 
 	# (se houverem .h)
-	# for a in *.h; do \
-	#	cp $$a ../$(DIRNAME)/$$a; \
-	# done
+	for a in *.h; do \
+		cp $$a ../$(DIRNAME)/$$a; \
+	done
 
 	# gera ../$(DIRNAME).tar.gz
 	tar -czvf ../$(DIRNAME).tar.gz ../$(DIRNAME)
